@@ -105,6 +105,40 @@ public class PhotoListActivity extends ActionBarActivity {
     }
 
     @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+            case START_RECORD:
+                LayoutInflater inflater = getLayoutInflater();
+                View view = inflater.inflate(R.layout.dialog_record, null);
+                final EditText etInterval = (EditText) view.findViewById(R.id.et_interval);
+                final EditText etEndDate = (EditText) view.findViewById(R.id.et_end_date);
+                return new AlertDialog.Builder(this)
+                        .setTitle(R.string.take_picture)
+                        .setView(view)
+                        .setPositiveButton(R.string.start,
+                                new DialogInterface.OnClickListener() {
+
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        takePhotoRegularly(etInterval.getText().toString(), etEndDate.getText().toString());
+                                    }
+
+                                })
+                        .setNegativeButton(R.string.cancel,
+                                new DialogInterface.OnClickListener() {
+
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+
+                                })
+                        .setCancelable(false)
+                        .create();
+        }
+        return null;
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -123,10 +157,17 @@ public class PhotoListActivity extends ActionBarActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.action_settings) {
-            return true;
+        switch (id) {
+            case R.id.camera:
+                takePhoto();
+                break;
+            case R.id.record:
+                showDialog(START_RECORD);
+                break;
+            case R.id.download:
+                downloadAllPhotos();
+            default:
         }
-
         return super.onOptionsItemSelected(item);
     }
 
