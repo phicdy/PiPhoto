@@ -2,12 +2,14 @@ package com.phicdy.piphoto;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.GridView;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -29,11 +31,14 @@ public class PhotoListActivity extends ActionBarActivity {
     private String host = "";
     private String user = "";
     private String password = "";
+    private GridView gridView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo_list);
+        gridView = (GridView) findViewById(R.id.gv_photos);
+        setAllListener();
     }
 
     @Override
@@ -55,6 +60,16 @@ public class PhotoListActivity extends ActionBarActivity {
     }
 
     public void doProc() {
+    private void setAllListener() {
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent();
+                intent.setClass(getApplicationContext(), PhotoActivity.class);
+                intent.putExtra(FileUtil.EXTRA_PHOTO, photoPathList.get(position));
+                startActivity(intent);
+            }
+        });
+    }
         new Thread() {
             @Override
             public void run() {
