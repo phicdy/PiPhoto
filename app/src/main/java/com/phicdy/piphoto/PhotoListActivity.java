@@ -63,7 +63,6 @@ public class PhotoListActivity extends ActionBarActivity {
     private static final String FINISH_TAKING_PHOTO = "finishTakingPhoto";
     private static final String FAIL = "fail";
     private static final String FAIL_REASON = "failReason";
-    private static final String LS_RESULT = "lsResult";
     private static final String PHOTO_NAME = "photoName";
 
     private static final int START_RECORD = 1;
@@ -187,10 +186,7 @@ public class PhotoListActivity extends ActionBarActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
-                if (action.equals(UPDATE_LS)) {
-                    tvLsResult.setVisibility(View.VISIBLE);
-                    tvLsResult.setText(intent.getStringExtra(LS_RESULT));
-                } else if (action.equals(REFRESH_PHOTOS)) {
+                if (action.equals(REFRESH_PHOTOS)) {
                     downloadProgressDialog.getDialog().dismiss();
                     refreshPhotos();
                 } else if(action.equals(FINISH_TAKING_PHOTO)) {
