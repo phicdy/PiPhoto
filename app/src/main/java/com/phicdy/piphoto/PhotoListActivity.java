@@ -3,13 +3,20 @@ package com.phicdy.piphoto;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.ImageView;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -21,6 +28,7 @@ import com.jcraft.jsch.SftpException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Vector;
@@ -31,14 +39,37 @@ public class PhotoListActivity extends ActionBarActivity {
     private String host = "";
     private String user = "";
     private String password = "";
+    private ArrayList<String> photoPathList;
+
     private GridView gridView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo_list);
+
         gridView = (GridView) findViewById(R.id.gv_photos);
+        refreshPhotos();
         setAllListener();
+    }
+
+    private void refreshPhotos() {
+        loadPhotoPathList();
+        BitmapAdapter adapter = new BitmapAdapter(
+                getApplicationContext(), R.layout.list_item_photo,
+                photoPathList);
+        gridView.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
+    }
+
+    private void loadPhotoPathList() {
+        photoPathList = new ArrayList<>();
+
+        File photoFolder = FileUtil.getPhotoFolder();
+        File[] photos = photoFolder.listFiles();
+        for (int i = 0; i < photos.length; i++) {
+            photoPathList.add(photos[i].getPath());
+        }
     }
 
     @Override
@@ -156,17 +187,62 @@ public class PhotoListActivity extends ActionBarActivity {
                         sdCardRootPath = line.replaceAll("\t", " ").split(" ")[2];
                     }
                 }
-            }else {
-                sdCardRootPath = Environment.getExternalStorageDirectory().getPath();
-            }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (scanner != null) {
-                scanner.close();
-            }
+    private class BitmapAdapter extends ArrayAdapter<String> {
+
+        private int resourceId;
+
+        public BitmapAdapter(Context context, int resource, List<String> objects) {
+            super(context, resource, objects);
+            resourceId = resource;
         }
 
-        return sdCardRootPath;
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            ViewHolder holder;
+            if (convertView == null) {
+                LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                convertView = inflater.inflate(resourceId, parent, false);
+
+                holder = new ViewHolder();
+                holder.image = (ImageView)convertView;
+                convertView.setTag(holder);
+            }else {
+                holder = (ViewHolder) convertView.getTag();
+                holder.image.setVisibility(View.INVISIBLE);
+            }
+
+            PhotoTask task = new PhotoTask(holder.image);
+            task.execute(getItem(position));
+
+            return convertView;
+        }
+
+
+
+        class ViewHolder {
+            ImageView image;
+        }
+    }
+
+    class PhotoTask extends AsyncTask<String, Void, Bitmap> {
+
+        private ImageView mView;
+
+        public PhotoTask(ImageView view) {
+            mView = view;
+        }
+
+        @Override
+        protected Bitmap doInBackground(String... params) {
+            return BitmapFactory.decodeFile(params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap result) {
+            Bitmap resizedBitmap = Bitmap.createScaledBitmap(result, 100, 100, true);
+            mView.setImageBitmap(resizedBitmap);
+            mView.setVisibility(View.VISIBLE);
+        }
     }
 }
